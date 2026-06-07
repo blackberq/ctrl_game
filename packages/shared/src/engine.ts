@@ -94,10 +94,47 @@ export function setConnected(room: Room, id: PlayerId, connected: boolean): Room
   return replacePlayer(room, id, { connected });
 }
 
+export function ensureConnectedHost(room: Room): Room {
+  const host = findPlayer(room, room.hostId);
+  if (host?.connected) {
+    return host.role === "host" ? room : replacePlayer(room, host.id, { role: "host" });
+  }
+
+  const nextHost =
+    room.players.find((p) => p.connected && p.role !== "spectator") ??
+    room.players.find((p) => p.connected);
+
+  if (!nextHost) return room;
+
+  return {
+    ...room,
+    hostId: nextHost.id,
+    players: room.players.map((player) => {
+      if (player.id === nextHost.id) return { ...player, role: "host" };
+      if (player.role === "host") return { ...player, role: "player" };
+      return player;
+    }),
+  };
+}
+
+export function disconnectPlayer(room: Room, id: PlayerId): Room {
+  if (!findPlayer(room, id)) return room;
+  return ensureConnectedHost(setConnected(room, id, false));
+}
+
+export function reconnectPlayer(room: Room, id: PlayerId): Room {
+  if (!findPlayer(room, id)) {
+    throw new GameError("Player is not in the room");
+  }
+  return ensureConnectedHost(setConnected(room, id, true));
+}
+
 function normalizeSettingsPatch(patch: Partial<RoomSettings>): Partial<RoomSettings> {
   const next = { ...patch };
   if (next.roundDurationSec !== undefined) {
-    const duration = Number.isFinite(next.roundDurationSec) ? next.roundDurationSec : DEFAULT_SETTINGS.roundDurationSec;
+    const duration = Number.isFinite(next.roundDurationSec)
+      ? next.roundDurationSec
+      : DEFAULT_SETTINGS.roundDurationSec;
     next.roundDurationSec = Math.min(300, Math.max(15, Math.round(duration)));
   }
   return next;

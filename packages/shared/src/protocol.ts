@@ -35,6 +35,12 @@ export interface JoinRoomMessage {
   asSpectator?: boolean;
 }
 
+export interface ResumeSessionMessage {
+  type: "resume_session";
+  roomId: RoomId;
+  playerId: PlayerId;
+}
+
 export interface UpdateSettingsMessage {
   type: "update_settings";
   settings: Partial<RoomSettings>;
@@ -75,6 +81,7 @@ export interface FinishRoundMessage {
 export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
+  | ResumeSessionMessage
   | UpdateSettingsMessage
   | SetModeMessage
   | StartRoundMessage

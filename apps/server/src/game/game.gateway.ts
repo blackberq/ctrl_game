@@ -13,19 +13,21 @@ import {
   GameError,
   addPlayer,
   createRoom,
+  disconnectPlayer,
   finishRound as finishRoundNow,
   markWord,
   pauseRound,
   projectRoom,
+  reconnectPlayer,
   remainingSeconds,
   resumeRound,
-  setConnected,
   setMode,
   startRound,
   updateSettings,
   type CreateRoomMessage,
   type JoinRoomMessage,
   type MarkWordMessage,
+  type ResumeSessionMessage,
   type Room,
   type SetModeMessage,
   type StartRoundMessage,
@@ -57,7 +59,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { roomId, playerId } = client.data;
     if (!roomId || !playerId || !this.rooms.has(roomId)) return;
 
-    const room = setConnected(this.rooms.get(roomId), playerId, false);
+    const sockets = await this.server.in(roomId).fetchSockets();
+    const hasAnotherSocket = sockets.some((socket) => {
+      const data = socket.data as SocketData;
+      return socket.id !== client.id && data.playerId === playerId;
+    });
+    if (hasAnotherSocket) return;
+
+    const room = disconnectPlayer(this.rooms.get(roomId), playerId);
     this.rooms.set(room);
     await this.broadcast(roomId);
   }
@@ -98,6 +107,23 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       this.rooms.set(room);
       await this.join(client, roomId, playerId);
+    });
+  }
+
+  @SubscribeMessage("resume_session")
+  async resumeSession(
+    @ConnectedSocket() client: GameSocket,
+    @MessageBody() body: ResumeSessionMessage,
+  ): Promise<void> {
+    await this.handle(client, async () => {
+      const roomId = body.roomId?.toUpperCase();
+      if (!roomId || !body.playerId || !this.rooms.has(roomId)) {
+        throw new GameError("Room not found");
+      }
+
+      const room = reconnectPlayer(this.rooms.get(roomId), body.playerId);
+      this.rooms.set(room);
+      await this.join(client, roomId, body.playerId);
     });
   }
 

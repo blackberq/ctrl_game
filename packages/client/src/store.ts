@@ -27,6 +27,11 @@ export interface GameState {
   error: string | null;
 }
 
+export interface GameSession {
+  roomId: string;
+  playerId: PlayerId;
+}
+
 const initialState: GameState = {
   status: "disconnected",
   roomId: null,
@@ -155,7 +160,13 @@ function createSocketMiddleware(url: string): Middleware {
         if (!socket) {
           store.dispatch(connecting());
           socket = io(url, { transports: ["websocket"], forceNew: true });
-          socket.on("connect", () => store.dispatch(connected()));
+          socket.on("connect", () => {
+            store.dispatch(connected());
+            const { roomId, playerId } = (store.getState() as { game: GameState }).game;
+            if (roomId && playerId) {
+              socket?.emit("resume_session", { type: "resume_session", roomId, playerId });
+            }
+          });
           socket.on("disconnect", () => store.dispatch(disconnected(undefined)));
           socket.on("connect_error", () =>
             store.dispatch(disconnected("Не вдалося під'єднатися до сервера")),
@@ -166,9 +177,12 @@ function createSocketMiddleware(url: string): Middleware {
           socket.on("room_state", (m: Extract<ServerMessage, { type: "room_state" }>) =>
             store.dispatch(roomStateReceived({ room: m.room, receivedAt: Date.now() })),
           );
-          socket.on("error", (m: Extract<ServerMessage, { type: "error" }>) =>
-            store.dispatch(errorReceived(m.message)),
-          );
+          socket.on("error", (m: Extract<ServerMessage, { type: "error" }>) => {
+            if (m.message === "Room not found" || m.message === "Player is not in the room") {
+              store.dispatch(reset());
+            }
+            store.dispatch(errorReceived(m.message));
+          });
         }
         return next(action);
       }
@@ -200,9 +214,15 @@ function createSocketMiddleware(url: string): Middleware {
 /* Store factory + typed helpers                                       */
 /* ------------------------------------------------------------------ */
 
-export function createGameStore(url: string) {
+export function createGameStore(url: string, session?: GameSession) {
   return configureStore({
     reducer: { game: gameSlice.reducer, ui: uiSlice.reducer },
+    preloadedState: session
+      ? {
+          game: { ...initialState, roomId: session.roomId, playerId: session.playerId },
+          ui: uiInitialState,
+        }
+      : undefined,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(createSocketMiddleware(url)),
   });
