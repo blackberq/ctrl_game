@@ -1,0 +1,22 @@
+{
+  "name": "ctrl-game",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ctrl_game monorepo — web (React) and mobile (React Native) clients with shared game logic",
+  "packageManager": "pnpm@11.0.4",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "web": "pnpm --filter @ctrl-game/web dev",
+    "mobile": "pnpm --filter @ctrl-game/mobile start",
+    "server": "pnpm --filter @ctrl-game/server dev",
+    "build": "pnpm -r build",
+    "build:shared": "pnpm --filter @ctrl-game/shared build",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r exec rm -rf dist node_modules .turbo && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
