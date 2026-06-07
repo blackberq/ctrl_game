@@ -105,6 +105,11 @@ One-time repository setup:
 2. Set **Build and deployment → Source** to **GitHub Actions**.
 3. Merge or push to `main`.
 
+Alternatively, add a `PAGES_TOKEN` repository secret with permission to enable
+Pages (`repo` scope for a classic PAT, or `administration:write` +
+`pages:write` for a GitHub App token). When that secret is present, the workflow
+can enable Pages automatically.
+
 The workflow builds `@ctrl-game/web` with the GitHub Pages base path
 `/ctrl_game/` and publishes `apps/web/dist`.
 
