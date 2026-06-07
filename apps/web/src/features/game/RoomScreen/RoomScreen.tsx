@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   activePlayer,
   disconnectSocket,
@@ -13,13 +13,26 @@ import {
   selectGame,
   setMode,
   startRound,
+  updateSettings,
 } from "@ctrl-game/client";
+import { TOPICS } from "@ctrl-game/shared";
 import { Badge, Button, Card, Chip, Input, Stack, Text, useTheme, useThemedStyles } from "../../../ui-kit";
 import { useAppDispatch, useAppSelector, useNow } from "../../../hooks";
 import { TopicBanner } from "../TopicBanner";
 import { WordList } from "../WordList";
 import { PlayerList } from "../PlayerList";
 import { MODES, makeStyles } from "./RoomScreen.styles";
+
+type TopicMode = "preset" | "custom";
+
+const MIN_TIMER_SEC = 15;
+const MAX_TIMER_SEC = 300;
+
+function clampTimer(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed)) return 60;
+  return Math.min(MAX_TIMER_SEC, Math.max(MIN_TIMER_SEC, parsed));
+}
 
 export function RoomScreen() {
   const dispatch = useAppDispatch();
@@ -36,8 +49,32 @@ export function RoomScreen() {
 
   const candidates = eligiblePlayers(room);
   const [activeId, setActiveId] = useState("");
-  const [topic, setTopic] = useState("");
+  const [topicMode, setTopicMode] = useState<TopicMode>("preset");
+  const [selectedTopic, setSelectedTopic] = useState(
+    () => TOPICS[Math.floor(Math.random() * TOPICS.length)] ?? "",
+  );
+  const [customTopic, setCustomTopic] = useState("");
+  const [timerSec, setTimerSec] = useState(String(room.settings.roundDurationSec));
   const selectedActive = activeId || candidates[0]?.id || room.you.id;
+  const normalizedTimerSec = clampTimer(timerSec);
+  const startTopic =
+    topicMode === "custom" ? customTopic.trim() || undefined : selectedTopic || undefined;
+
+  useEffect(() => {
+    setTimerSec(String(room.settings.roundDurationSec));
+  }, [room.settings.roundDurationSec]);
+
+  function randomizeTopic() {
+    const next = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+    setSelectedTopic(next);
+  }
+
+  function startConfiguredRound() {
+    if (normalizedTimerSec !== room.settings.roundDurationSec) {
+      dispatch(updateSettings({ settings: { roundDurationSec: normalizedTimerSec } }));
+    }
+    dispatch(startRound({ activePlayerId: selectedActive, topic: startTopic }));
+  }
 
   return (
     <Stack gap={theme.spacing.md}>
@@ -119,16 +156,55 @@ export function RoomScreen() {
                 ))}
               </Stack>
 
-              <Text variant="heading">Тема (необов'язково)</Text>
-              <Input value={topic} onChangeText={setTopic} placeholder="Інакше випадкова" maxLength={120} />
+              <Text variant="heading">Тема розповіді</Text>
+              <Stack direction="row" gap={theme.spacing.sm} wrap>
+                <Chip
+                  label="Готові питання"
+                  selected={topicMode === "preset"}
+                  onPress={() => setTopicMode("preset")}
+                />
+                <Chip
+                  label="Своя тема"
+                  selected={topicMode === "custom"}
+                  onPress={() => setTopicMode("custom")}
+                />
+              </Stack>
+
+              {topicMode === "preset" ? (
+                <Stack gap={theme.spacing.sm}>
+                  <select
+                    value={selectedTopic}
+                    onChange={(e) => setSelectedTopic(e.target.value)}
+                    style={styles.select}
+                  >
+                    {TOPICS.map((presetTopic) => (
+                      <option key={presetTopic} value={presetTopic}>
+                        {presetTopic}
+                      </option>
+                    ))}
+                  </select>
+                  <Button onPress={randomizeTopic}>Випадкова тема</Button>
+                </Stack>
+              ) : (
+                <Input
+                  value={customTopic}
+                  onChangeText={setCustomTopic}
+                  placeholder="Напр. Історія про найгіршу відпустку"
+                  maxLength={140}
+                />
+              )}
+
+              <Text variant="heading">Таймер раунду</Text>
+              <Stack gap={theme.spacing.xs}>
+                <Input value={timerSec} onChangeText={setTimerSec} placeholder="60" maxLength={3} />
+                <Text variant="muted">
+                  {normalizedTimerSec} секунд · можна від {MIN_TIMER_SEC} до {MAX_TIMER_SEC}
+                </Text>
+              </Stack>
 
               <Button
                 variant="primary"
-                onPress={() =>
-                  dispatch(
-                    startRound({ activePlayerId: selectedActive, topic: topic.trim() || undefined }),
-                  )
-                }
+                onPress={startConfiguredRound}
               >
                 {round ? "Новий раунд" : "Почати раунд"}
               </Button>

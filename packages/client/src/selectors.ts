@@ -34,5 +34,5 @@ export function displayRemainingSec(game: GameState, now: number): number {
   if (!round) return 0;
   if (round.status !== "running") return round.remainingSec;
   const elapsed = (now - game.receivedAt) / 1000;
-  return Math.max(0, Math.round(round.remainingSec - elapsed));
+  return Math.max(0, Math.ceil(round.remainingSec - elapsed));
 }

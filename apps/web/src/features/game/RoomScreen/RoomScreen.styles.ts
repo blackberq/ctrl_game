@@ -26,5 +26,17 @@ export function makeStyles(theme: Theme) {
       textAlign: "center",
       color: low ? theme.colors.danger : theme.colors.text,
     }),
+    select: {
+      padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
+      fontSize: theme.fontSize.md,
+      color: theme.colors.text,
+      background: theme.colors.background,
+      borderWidth: 1,
+      borderStyle: "solid",
+      borderColor: theme.colors.border,
+      borderRadius: theme.radius.md,
+      width: "100%",
+      boxSizing: "border-box",
+    } as CSSProperties,
   };
 }

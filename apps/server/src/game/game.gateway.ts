@@ -13,10 +13,11 @@ import {
   GameError,
   addPlayer,
   createRoom,
-  finishRound,
+  finishRound as finishRoundNow,
   markWord,
   pauseRound,
   projectRoom,
+  remainingSeconds,
   resumeRound,
   setConnected,
   setMode,
@@ -46,6 +47,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server!: Server;
 
   private readonly logger = new Logger(GameGateway.name);
+  private readonly roundTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   handleConnection(client: GameSocket): void {
     this.logger.debug(`Socket connected: ${client.id}`);
@@ -126,17 +128,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         words: body.words,
         topic: body.topic,
       }),
+      (room) => this.scheduleRoundTimer(room),
     );
   }
 
   @SubscribeMessage("pause_round")
   async pauseRound(@ConnectedSocket() client: GameSocket): Promise<void> {
-    await this.hostAction(client, (room) => pauseRound(room));
+    await this.hostAction(client, (room) => pauseRound(room), (room) => this.clearRoundTimer(room.id));
   }
 
   @SubscribeMessage("resume_round")
   async resumeRound(@ConnectedSocket() client: GameSocket): Promise<void> {
-    await this.hostAction(client, (room) => resumeRound(room));
+    await this.hostAction(client, (room) => resumeRound(room), (room) => this.scheduleRoundTimer(room));
   }
 
   @SubscribeMessage("mark_word")
@@ -149,7 +152,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("finish_round")
   async finishRound(@ConnectedSocket() client: GameSocket): Promise<void> {
-    await this.hostAction(client, (room) => finishRound(room));
+    await this.hostAction(client, (room) => finishRoundNow(room), (room) => this.clearRoundTimer(room.id));
   }
 
   /* ----------------------------- helpers ---------------------------- */
@@ -158,6 +161,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private async hostAction(
     client: GameSocket,
     mutate: (room: Room) => Room,
+    afterUpdate?: (room: Room) => void,
   ): Promise<void> {
     await this.handle(client, async () => {
       const { roomId, playerId } = client.data;
@@ -166,9 +170,45 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const current = this.rooms.get(roomId);
       if (current.hostId !== playerId) throw new GameError("Only the host can do that");
 
-      this.rooms.set(mutate(current));
+      const updated = mutate(current);
+      this.rooms.set(updated);
+      afterUpdate?.(updated);
       await this.broadcast(roomId);
     });
+  }
+
+  private clearRoundTimer(roomId: string): void {
+    const timer = this.roundTimers.get(roomId);
+    if (!timer) return;
+    clearTimeout(timer);
+    this.roundTimers.delete(roomId);
+  }
+
+  private scheduleRoundTimer(room: Room): void {
+    this.clearRoundTimer(room.id);
+    if (!room.round || room.round.status !== "running") return;
+
+    const delayMs = Math.max(0, Math.ceil(remainingSeconds(room.round) * 1000) + 50);
+    const timer = setTimeout(() => {
+      void this.finishExpiredRound(room.id);
+    }, delayMs);
+    this.roundTimers.set(room.id, timer);
+  }
+
+  private async finishExpiredRound(roomId: string): Promise<void> {
+    this.roundTimers.delete(roomId);
+    if (!this.rooms.has(roomId)) return;
+
+    const room = this.rooms.get(roomId);
+    if (!room.round || room.round.status !== "running") return;
+
+    if (remainingSeconds(room.round) > 0) {
+      this.scheduleRoundTimer(room);
+      return;
+    }
+
+    this.rooms.set(finishRoundNow(room));
+    await this.broadcast(roomId);
   }
 
   /** Attach socket to a room, acknowledge, and broadcast the new state. */

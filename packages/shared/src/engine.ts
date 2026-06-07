@@ -94,8 +94,17 @@ export function setConnected(room: Room, id: PlayerId, connected: boolean): Room
   return replacePlayer(room, id, { connected });
 }
 
+function normalizeSettingsPatch(patch: Partial<RoomSettings>): Partial<RoomSettings> {
+  const next = { ...patch };
+  if (next.roundDurationSec !== undefined) {
+    const duration = Number.isFinite(next.roundDurationSec) ? next.roundDurationSec : DEFAULT_SETTINGS.roundDurationSec;
+    next.roundDurationSec = Math.min(300, Math.max(15, Math.round(duration)));
+  }
+  return next;
+}
+
 export function updateSettings(room: Room, patch: Partial<RoomSettings>): Room {
-  return { ...room, settings: { ...room.settings, ...patch } };
+  return { ...room, settings: { ...room.settings, ...normalizeSettingsPatch(patch) } };
 }
 
 export function setMode(room: Room, mode: GameMode): Room {

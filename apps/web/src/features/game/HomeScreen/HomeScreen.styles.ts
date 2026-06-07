@@ -18,5 +18,12 @@ export function makeStyles(theme: Theme) {
       gap: theme.spacing.sm,
       cursor: "pointer",
     } as CSSProperties,
+    rulesList: {
+      margin: 0,
+      paddingLeft: theme.spacing.lg,
+      color: theme.colors.textMuted,
+      fontSize: theme.fontSize.sm,
+      lineHeight: 1.5,
+    } as CSSProperties,
   };
 }

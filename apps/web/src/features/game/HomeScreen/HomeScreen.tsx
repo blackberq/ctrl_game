@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createRoom, joinRoom, selectStatus } from "@ctrl-game/client";
-import { Button, Input, Stack, Text, useTheme, useThemedStyles } from "../../../ui-kit";
+import { Button, Card, Input, Stack, Text, useTheme, useThemedStyles } from "../../../ui-kit";
 import { useAppDispatch, useAppSelector } from "../../../hooks";
 import { makeStyles } from "./HomeScreen.styles";
 
@@ -55,6 +55,19 @@ export function HomeScreen() {
       </Button>
 
       {!connected && <Text variant="muted">Під'єднання до сервера…</Text>}
+
+      <Card>
+        <Stack gap={theme.spacing.sm}>
+          <Text variant="heading">Правила гри</Text>
+          <ol style={styles.rulesList}>
+            <li>Ведучий створює кімнату, обирає гравця, тему і час раунду.</li>
+            <li>Активний гравець бачить секретні слова і розповідає історію на тему.</li>
+            <li>Слова треба вплести природно, не називаючи список напряму.</li>
+            <li>Ведучий відмічає використані слова і завершує раунд.</li>
+            <li>Глядачі не бачать секретні слова до кінця раунду.</li>
+          </ol>
+        </Stack>
+      </Card>
     </Stack>
   );
 }
