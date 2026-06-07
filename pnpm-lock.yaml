@@ -191,6 +191,9 @@ importers:
       '@ctrl-game/shared':
         specifier: workspace:*
         version: link:../shared
+      '@ctrl-game/theme':
+        specifier: workspace:*
+        version: link:../theme
       '@reduxjs/toolkit':
         specifier: ^2.2.7
         version: 2.12.0(react-redux@9.3.0(@types/react@19.2.17)(react@19.2.3)(redux@5.0.1))(react@19.2.3)
