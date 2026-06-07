@@ -19,6 +19,7 @@ import {
   type Round,
 } from "./types";
 import { generateWords, type Rng } from "./words";
+import { generateTopic } from "./topics";
 import type { ClientRoom, ClientRound, ClientSecretWord } from "./protocol";
 
 /** Thrown on an illegal action (not host, room full, no active round, …). */
@@ -109,6 +110,8 @@ export interface StartRoundOptions {
   activePlayerId: PlayerId;
   /** Manual words (host_input mode); otherwise generated from difficulty. */
   words?: string[];
+  /** Manual topic; otherwise a random one is generated. */
+  topic?: string;
   rng?: Rng;
 }
 
@@ -131,6 +134,7 @@ export function startRound(
 
   const round: Round = {
     activePlayerId: options.activePlayerId,
+    topic: options.topic?.trim() || generateTopic(options.rng),
     words,
     durationSec: room.settings.roundDurationSec,
     status: "running",
@@ -249,6 +253,7 @@ export function projectRoom(
     }));
     round = {
       activePlayerId: room.round.activePlayerId,
+      topic: room.round.topic,
       words,
       durationSec: room.round.durationSec,
       status: room.round.status,

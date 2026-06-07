@@ -60,6 +60,8 @@ export interface RoomSettings {
 
 export interface Round {
   activePlayerId: PlayerId;
+  /** The theme/question the active player tells a story about (visible to all). */
+  topic: string;
   words: SecretWord[];
   durationSec: number;
   status: RoundStatus;

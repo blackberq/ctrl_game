@@ -50,6 +50,8 @@ export interface StartRoundMessage {
   activePlayerId: PlayerId;
   /** Optional manual words (host_input mode); otherwise generated from difficulty. */
   words?: string[];
+  /** Optional manual topic; otherwise a random one is generated. */
+  topic?: string;
 }
 
 export interface PauseRoundMessage {
@@ -95,6 +97,8 @@ export interface ClientSecretWord {
 
 export interface ClientRound {
   activePlayerId: PlayerId;
+  /** Story theme/question — visible to everyone. */
+  topic: string;
   words: ClientSecretWord[];
   durationSec: number;
   status: RoundStatus;

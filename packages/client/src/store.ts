@@ -13,6 +13,7 @@ import type {
   RoomSettings,
   ServerMessage,
 } from "@ctrl-game/shared";
+import type { ColorScheme } from "@ctrl-game/theme";
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
@@ -79,6 +80,31 @@ const gameSlice = createSlice({
 export const { clearError } = gameSlice.actions;
 
 /* ------------------------------------------------------------------ */
+/* UI slice — theme / color scheme                                     */
+/* ------------------------------------------------------------------ */
+
+export interface UiState {
+  colorScheme: ColorScheme;
+}
+
+const uiInitialState: UiState = { colorScheme: "light" };
+
+const uiSlice = createSlice({
+  name: "ui",
+  initialState: uiInitialState,
+  reducers: {
+    setColorScheme: (state, action: PayloadAction<ColorScheme>) => {
+      state.colorScheme = action.payload;
+    },
+    toggleColorScheme: (state) => {
+      state.colorScheme = state.colorScheme === "dark" ? "light" : "dark";
+    },
+  },
+});
+
+export const { setColorScheme, toggleColorScheme } = uiSlice.actions;
+
+/* ------------------------------------------------------------------ */
 /* Command actions — intercepted by the socket middleware (no reducer) */
 /* ------------------------------------------------------------------ */
 
@@ -92,7 +118,9 @@ export const setMode = createAction<{ mode: GameMode }>("game/cmd/set_mode");
 export const updateSettings =
   createAction<{ settings: Partial<RoomSettings> }>("game/cmd/update_settings");
 export const startRound =
-  createAction<{ activePlayerId: PlayerId; words?: string[] }>("game/cmd/start_round");
+  createAction<{ activePlayerId: PlayerId; words?: string[]; topic?: string }>(
+    "game/cmd/start_round",
+  );
 export const pauseRound = createAction("game/cmd/pause_round");
 export const resumeRound = createAction("game/cmd/resume_round");
 export const markWord = createAction<{ index: number; used: boolean }>("game/cmd/mark_word");
@@ -174,7 +202,7 @@ function createSocketMiddleware(url: string): Middleware {
 
 export function createGameStore(url: string) {
   return configureStore({
-    reducer: { game: gameSlice.reducer },
+    reducer: { game: gameSlice.reducer, ui: uiSlice.reducer },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(createSocketMiddleware(url)),
   });

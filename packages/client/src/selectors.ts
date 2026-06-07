@@ -5,6 +5,7 @@ export const selectGame = (state: RootState): GameState => state.game;
 export const selectRoom = (state: RootState): ClientRoom | null => state.game.room;
 export const selectError = (state: RootState): string | null => state.game.error;
 export const selectStatus = (state: RootState) => state.game.status;
+export const selectColorScheme = (state: RootState) => state.ui.colorScheme;
 
 export function isHost(room: ClientRoom): boolean {
   return room.you.id === room.hostId;

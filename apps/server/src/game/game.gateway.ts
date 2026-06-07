@@ -121,7 +121,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: StartRoundMessage,
   ): Promise<void> {
     await this.hostAction(client, (room) =>
-      startRound(room, { activePlayerId: body.activePlayerId, words: body.words }),
+      startRound(room, {
+        activePlayerId: body.activePlayerId,
+        words: body.words,
+        topic: body.topic,
+      }),
     );
   }
 
