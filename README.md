@@ -59,7 +59,7 @@ same types and may reuse the engine for optimistic UI.
 
 ## Requirements
 
-- Node >= 20 (mobile requires >= 22.11)
+- Node >= 22.13
 - pnpm 11
 - For mobile: Xcode / Android Studio per the
   [React Native environment setup](https://reactnative.dev/docs/environment-setup)
@@ -93,6 +93,24 @@ players until the round is finished.
 pnpm web            # vite dev server on http://localhost:5173
 pnpm --filter @ctrl-game/web build
 ```
+
+### Deploy web to GitHub Pages
+
+The web app is deployed by `.github/workflows/deploy-web.yml` on every push to
+`main`, and can also be deployed manually from the GitHub Actions tab.
+
+One-time repository setup:
+
+1. Open **Settings → Pages** in GitHub.
+2. Set **Build and deployment → Source** to **GitHub Actions**.
+3. Merge or push to `main`.
+
+The workflow builds `@ctrl-game/web` with the GitHub Pages base path
+`/ctrl_game/` and publishes `apps/web/dist`.
+
+If the deployed web app should connect to a public backend instead of the local
+default `http://localhost:3001`, add a repository variable named
+`VITE_SERVER_URL`. The workflow passes it to the Vite build automatically.
 
 ### Mobile (React Native CLI)
 
