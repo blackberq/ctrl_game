@@ -5,7 +5,7 @@
   "description": "ctrl_game monorepo — web (React) and mobile (React Native) clients with shared game logic",
   "packageManager": "pnpm@11.0.4",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "web": "pnpm --filter @ctrl-game/web dev",

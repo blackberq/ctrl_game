@@ -59,7 +59,7 @@ same types and may reuse the engine for optimistic UI.
 
 ## Requirements
 
-- Node >= 20 (mobile requires >= 22.11)
+- Node >= 22.13
 - pnpm 11
 - For mobile: Xcode / Android Studio per the
   [React Native environment setup](https://reactnative.dev/docs/environment-setup)
