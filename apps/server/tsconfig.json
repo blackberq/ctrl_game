@@ -10,7 +10,6 @@
     "isolatedModules": false,
     "declaration": false,
     "sourceMap": true,
-    "incremental": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
