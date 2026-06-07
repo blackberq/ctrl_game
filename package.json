@@ -11,6 +11,7 @@
     "web": "pnpm --filter @ctrl-game/web dev",
     "mobile": "pnpm --filter @ctrl-game/mobile start",
     "server": "pnpm --filter @ctrl-game/server dev",
+    "tunnel": "ngrok http --url=idealness-unknowing-ladder.ngrok-free.dev 3001",
     "build": "pnpm -r build",
     "build:shared": "pnpm --filter @ctrl-game/shared build",
     "typecheck": "pnpm -r typecheck",

@@ -113,9 +113,32 @@ can enable Pages automatically.
 The workflow builds `@ctrl-game/web` with the GitHub Pages base path
 `/ctrl_game/` and publishes `apps/web/dist`.
 
-If the deployed web app should connect to a public backend instead of the local
-default `http://localhost:3001`, add a repository variable named
+The deployed web app defaults to the reserved ngrok backend URL. If it should
+connect to another public backend, add a repository variable named
 `VITE_SERVER_URL`. The workflow passes it to the Vite build automatically.
+
+### Public local backend with ngrok
+
+Use ngrok when the GitHub Pages web app should talk to the local NestJS server.
+
+One-time local setup:
+
+```bash
+ngrok config add-authtoken "<YOUR_NGROK_AUTHTOKEN>"
+```
+
+Run the local backend and tunnel in separate terminals:
+
+```bash
+pnpm build:shared
+pnpm server
+pnpm tunnel
+```
+
+The production web fallback and `pnpm tunnel` use the reserved URL
+`https://idealness-unknowing-ladder.ngrok-free.dev` and forwards it to the local
+server on port `3001`. If you change that URL, update `VITE_SERVER_URL` and
+rerun the GitHub Pages workflow.
 
 ### Mobile (React Native CLI)
 
